@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/ApiAbstrationFramework.iml" filepath="$PROJECT_DIR$/ApiAbstrationFramework.iml" />
+      <module fileurl="file://$PROJECT_DIR$/apiabstractionframework/apiabstractionframework.iml" filepath="$PROJECT_DIR$/apiabstractionframework/apiabstractionframework.iml" />
+    </modules>
+  </component>
+</project>
