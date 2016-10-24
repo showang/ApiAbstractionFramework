@@ -1,4 +1,4 @@
-package tw.showang.apiabstrationframework.volley;
+package tw.showang.apiabstrationframework.support.volley;
 
 import android.content.Context;
 import android.support.v4.util.ArrayMap;
@@ -29,16 +29,17 @@ import java.util.Map;
 
 import okhttp3.OkHttpClient;
 import tw.showang.apiabstrationframework.Api;
+import tw.showang.apiabstrationframework.Api.HttpMethod;
 import tw.showang.apiabstrationframework.ApiCipher;
 import tw.showang.apiabstrationframework.BuildConfig;
-import tw.showang.apiabstrationframework.HttpMethod;
-import tw.showang.apiabstrationframework.RequestError;
 import tw.showang.apiabstrationframework.RequestExecutor;
+import tw.showang.apiabstrationframework.error.ApiCipherException;
+import tw.showang.apiabstrationframework.error.RequestError;
 import tw.showang.apiabstrationframework.logger.Logger;
 
-import static tw.showang.apiabstrationframework.volley.VolleyRequestExecutor.ParameterOperations.AND;
-import static tw.showang.apiabstrationframework.volley.VolleyRequestExecutor.ParameterOperations.EQUAL;
-import static tw.showang.apiabstrationframework.volley.VolleyRequestExecutor.ParameterOperations.QUESTION;
+import static tw.showang.apiabstrationframework.support.volley.VolleyRequestExecutor.ParameterOperations.AND;
+import static tw.showang.apiabstrationframework.support.volley.VolleyRequestExecutor.ParameterOperations.EQUAL;
+import static tw.showang.apiabstrationframework.support.volley.VolleyRequestExecutor.ParameterOperations.QUESTION;
 
 public class VolleyRequestExecutor implements RequestExecutor {
 
@@ -106,7 +107,12 @@ public class VolleyRequestExecutor implements RequestExecutor {
 				ApiCipher cipher = api.getApiCipher();
 				String requestBody = api.getRequestBody();
 				byte[] bodyBytes = requestBody.getBytes();
-				return cipher != null && api.isRequestBodyEncrypt() ? cipher.encode(bodyBytes) : bodyBytes;
+				try {
+					return cipher != null && api.isRequestBodyEncrypt() ? cipher.encode(bodyBytes) : bodyBytes;
+				} catch (ApiCipherException e) {
+					mLogger.e("Request body encode error.");
+				}
+				return bodyBytes;
 			}
 
 			@Override
@@ -159,10 +165,9 @@ public class VolleyRequestExecutor implements RequestExecutor {
 			@Override
 			protected Response<String> parseNetworkResponse(NetworkResponse response) {
 				try {
-					ApiCipher cipher = api.getApiCipher();
-					String result = new String(cipher != null && api.isResponseBodyDecrypt()? cipher.decode(response.data) : response.data, URL_CHAR_ENCODE);
+					String result = parseResponseBody(api, response.data);
 					return Response.success(result, HttpHeaderParser.parseCacheHeaders(response));
-				} catch (IOException e) {
+				} catch (IOException | ApiCipherException e) {
 					mLogger.e(Log.getStackTraceString(e));
 				}
 				return super.parseNetworkResponse(response);
@@ -267,14 +272,21 @@ public class VolleyRequestExecutor implements RequestExecutor {
 			}
 			statusCode = volleyError.networkResponse.statusCode;
 			try {
-				ApiCipher cipher = api.getApiCipher();
-				responseBody = new String(cipher == null ? volleyError.networkResponse.data : cipher.decode(volleyError.networkResponse.data), URL_CHAR_ENCODE);
+				responseBody = parseResponseBody(api, volleyError.networkResponse.data);
 			} catch (UnsupportedEncodingException e) {
-				e.printStackTrace();
+				mLogger.e(Log.getStackTraceString(e));
+			} catch (ApiCipherException e) {
+				mLogger.e(Log.getStackTraceString(e));
+				api.onRequestFail(RequestError.DECODE_ERROR, "Decode response body error.");
 			}
 			api.onRequestFail(RequestError.SERVER_ERROR, responseBody);
 		}
 		mLogger.e(api.getClass().getSimpleName() + String.format(DEBUG_ERROR_BODY_MESSAGE, statusCode) + responseBody);
+	}
+
+	private String parseResponseBody(Api api, byte[] body) throws UnsupportedEncodingException, ApiCipherException {
+		ApiCipher cipher = api.getApiCipher();
+		return new String(cipher != null && api.isResponseBodyDecrypt() ? cipher.decode(body) : body, URL_CHAR_ENCODE);
 	}
 
 	@Override

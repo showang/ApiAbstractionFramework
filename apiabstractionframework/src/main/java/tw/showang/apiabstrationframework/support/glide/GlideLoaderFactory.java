@@ -1,4 +1,4 @@
-package tw.showang.apiabstrationframework.glide;
+package tw.showang.apiabstrationframework.support.glide;
 
 import com.bumptech.glide.load.model.GlideUrl;
 import com.bumptech.glide.load.model.ModelLoaderFactory;

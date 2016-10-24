@@ -2,14 +2,7 @@ package tw.showang.apiabstrationframework;
 
 import java.util.Map;
 
-public interface Api<T> {
-
-	class Priority {
-		public static final int LOW = 0;
-		public static final int NORMAL = 1;
-		public static final int HIGH = 2;
-		public static final int IMMEDIATE = 3;
-	}
+public interface Api {
 
 	int getPriority();
 
@@ -29,10 +22,6 @@ public interface Api<T> {
 
 	void getParameter(Map<String, String> parameterMap);
 
-	Api success(ApiListener<T> listener);
-
-	Api fail(ApiErrorListener listener);
-
 	void onRequestSuccess(String result);
 
 	void onRequestFail(int cause, String errorMessage);
@@ -47,12 +36,26 @@ public interface Api<T> {
 
 	boolean isResponseBodyDecrypt();
 
-	interface ApiListener<T> {
-		void onSuccess(T response);
+	class HttpMethod {
+		public static final int GET = 0;
+		public static final int POST = 1;
+		public static final int PUT = 2;
+		public static final int DELETE = 3;
+		public static final int HEAD = 4;
+		public static final int OPTIONS = 5;
+		public static final int TRACE = 6;
+		public static final int PATCH = 7;
 	}
 
-	interface ApiErrorListener {
-		void onFail(int errorType, String message);
+	class Priority {
+		public static final int LOW = 0;
+		public static final int NORMAL = 1;
+		public static final int HIGH = 2;
+		public static final int IMMEDIATE = 3;
 	}
 
+	class Protocol {
+		public static final String HTTP = "http://";
+		public static final String HTTPS = "https://";
+	}
 }

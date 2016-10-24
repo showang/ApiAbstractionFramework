@@ -1,4 +1,4 @@
-package tw.showang.apiabstrationframework;
+package tw.showang.apiabstrationframework.error;
 
 public class RequestError {
 	public static final int NETWORK_NOT_AVAILABLE = Integer.MAX_VALUE - 1;
