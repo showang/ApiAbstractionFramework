@@ -4,29 +4,30 @@ import android.os.AsyncTask;
 
 public class AsyncManager<BackgroundResult> {
 
-	private static boolean isAsync = true;
-	private AsyncWork<BackgroundResult> asyncWork;
-	private PostWork<BackgroundResult> postWork;
+	private boolean mIsAsync = true;
+	private AsyncWork<BackgroundResult> mAsyncWork;
+	private PostWork<BackgroundResult> mPostWork;
 
-	public static void setIsAsync(boolean isAsync) {
-		AsyncManager.isAsync = isAsync;
+	public AsyncManager<BackgroundResult> setAsync(boolean isAsync) {
+		mIsAsync = isAsync;
+		return this;
 	}
 
 	public AsyncManager<BackgroundResult> background(AsyncWork<BackgroundResult> work) {
-		asyncWork = work;
+		mAsyncWork = work;
 		return this;
 	}
 
 	public AsyncManager<BackgroundResult> post(PostWork<BackgroundResult> work) {
-		postWork = work;
+		mPostWork = work;
 		return this;
 	}
 
 	public void start() {
-		if (asyncWork == null) {
+		if (mAsyncWork == null) {
 			throw new IllegalStateException("Plz init background work before start.");
 		}
-		if (isAsync) {
+		if (mIsAsync) {
 			doAsync();
 		} else {
 			doSync();
@@ -34,9 +35,9 @@ public class AsyncManager<BackgroundResult> {
 	}
 
 	private void doSync() {
-		BackgroundResult result = asyncWork.doInBackground();
-		if (postWork != null) {
-			postWork.onPostExecute(result);
+		BackgroundResult result = mAsyncWork.doInBackground();
+		if (mPostWork != null) {
+			mPostWork.onPostExecute(result);
 		}
 	}
 
@@ -44,14 +45,14 @@ public class AsyncManager<BackgroundResult> {
 		new AsyncTask<Void, Void, BackgroundResult>() {
 			@Override
 			protected BackgroundResult doInBackground(Void... params) {
-				return asyncWork.doInBackground();
+				return mAsyncWork.doInBackground();
 			}
 
 			@Override
 			protected void onPostExecute(BackgroundResult backgroundResult) {
 				super.onPostExecute(backgroundResult);
-				if (postWork != null) {
-					postWork.onPostExecute(backgroundResult);
+				if (mPostWork != null) {
+					mPostWork.onPostExecute(backgroundResult);
 				}
 			}
 		}.execute();

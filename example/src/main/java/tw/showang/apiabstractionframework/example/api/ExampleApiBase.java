@@ -49,9 +49,7 @@ public abstract class ExampleApiBase<SubClass extends ExampleApiBase<SubClass, R
 
 	@Override
 	public void onRequestSuccess(final String result) {
-		sLogger.i(result);
-		AsyncManager<Result> asyncManager = new AsyncManager<>();
-		asyncManager
+		new AsyncManager<Result>()
 				.background(new AsyncWork<Result>() {
 					@Override
 					public Result doInBackground() {
@@ -67,8 +65,8 @@ public abstract class ExampleApiBase<SubClass extends ExampleApiBase<SubClass, R
 				.post(new PostWork<Result>() {
 					@Override
 					public void onPostExecute(Result result) {
-						if (result != null) {
-
+						if (result != null && mSuccessListener != null) {
+							mSuccessListener.onSuccess(result);
 						} else {
 
 						}
@@ -96,14 +94,10 @@ public abstract class ExampleApiBase<SubClass extends ExampleApiBase<SubClass, R
 	}
 
 	@Override
-	public void getHeaders(Map<String, String> headerMap) {
-
-	}
+	public void getHeaders(Map<String, String> headerMap) {}
 
 	@Override
-	public void getParameter(Map<String, String> parameterMap) {
-
-	}
+	public void getParameter(Map<String, String> parameterMap) {}
 
 	@Override
 	public int getTimeout() {

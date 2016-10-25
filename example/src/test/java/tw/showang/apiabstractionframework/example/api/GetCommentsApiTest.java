@@ -34,6 +34,7 @@ public class GetCommentsApiTest extends ApiTestBase {
 	}
 
 	private void checkRequest(List<GetCommentsResult> response) {
+		System.out.println("checkRequest");
 		Assert.assertNotNull(response);
 		Assert.assertTrue(response.size() != 0);
 		GetCommentsResult resultItem = response.get(0);

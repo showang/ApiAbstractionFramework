@@ -13,7 +13,7 @@ import tw.showang.apiabstractionframework.example.api.ExampleApiBase;
 import tw.showang.apiabstractionframework.example.api.ExampleApiError;
 import tw.showang.apiabstrationframework.RequestExecutor;
 import tw.showang.apiabstrationframework.logger.Logger;
-import tw.showang.apiabstrationframework.util.AsyncManager;
+import tw.showang.apiabstrationframework.support.okhttp.OkHttp3RequestExecutor;
 
 @Config(manifest = Config.NONE, sdk = Build.VERSION_CODES.LOLLIPOP)
 public class ApiTestBase {
@@ -21,8 +21,7 @@ public class ApiTestBase {
 	@BeforeClass
 	public static void setup() {
 		Logger logger = new UnitTestLogger();
-		AsyncManager.setIsAsync(false);
-		RequestExecutor executor = new OkHttp3SyncRequestExecutor(new OkHttpClient(), logger);
+		RequestExecutor executor = new OkHttp3RequestExecutor(new OkHttpClient(), logger).setAsync(false);
 		ExampleApiBase.init(executor, logger);
 	}
 
@@ -38,8 +37,8 @@ public class ApiTestBase {
 			case ExampleApiError.SERVER_ERROR:
 				errorType = "UNKNOWN_SERVER_ERROR";
 				break;
-			case ExampleApiError.TIMEOUT_ERROR:
-				errorType = "TIMEOUT_ERROR";
+			case ExampleApiError.REQUEST_TIMEOUT:
+				errorType = "REQUEST_TIMEOUT";
 				break;
 			case ExampleApiError.RESULT_EMPTY:
 				errorType = "RESULT_EMPTY";

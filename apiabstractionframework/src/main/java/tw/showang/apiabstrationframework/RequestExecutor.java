@@ -7,5 +7,4 @@ public interface RequestExecutor {
 	void cancel(Object tag);
 
 	void cancel(Api api);
-
 }

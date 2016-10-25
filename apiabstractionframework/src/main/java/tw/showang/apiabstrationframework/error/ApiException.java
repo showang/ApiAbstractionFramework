@@ -2,11 +2,16 @@ package tw.showang.apiabstrationframework.error;
 
 public class ApiException extends Exception {
 
-	public int cause;
+	public int mErrorCode;
 
-	public ApiException(int cause, String message) {
+	public ApiException(int errorCode, String message) {
 		super(message);
-		this.cause = cause;
+		mErrorCode = errorCode;
+	}
+
+	public ApiException(int errorCode, Throwable cause) {
+		super(cause);
+		mErrorCode = errorCode;
 	}
 
 }
