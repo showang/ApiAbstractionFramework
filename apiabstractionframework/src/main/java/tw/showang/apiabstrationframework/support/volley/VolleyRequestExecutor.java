@@ -34,7 +34,7 @@ import tw.showang.apiabstrationframework.ApiCipher;
 import tw.showang.apiabstrationframework.BuildConfig;
 import tw.showang.apiabstrationframework.RequestExecutor;
 import tw.showang.apiabstrationframework.error.ApiCipherException;
-import tw.showang.apiabstrationframework.error.RequestErrorCode;
+import tw.showang.apiabstrationframework.error.RequestError;
 import tw.showang.apiabstrationframework.logger.Logger;
 
 import static tw.showang.apiabstrationframework.support.volley.VolleyRequestExecutor.ParameterOperations.AND;
@@ -256,18 +256,18 @@ public class VolleyRequestExecutor implements RequestExecutor {
 	private void onResponseError(Api api, VolleyError volleyError) {
 		mLogger.e(DEBUG_REQUEST_ERROR_MESSAGE + api.getUrl());
 		if (volleyError == null) {
-			api.onRequestFail(RequestErrorCode.SERVER_ERROR, "");
+			api.onRequestFail(RequestError.UNKNOWN_SERVER_ERROR, "");
 			return;
 		}
 		int statusCode = 0;
 		String responseBody = null;
 		if (volleyError instanceof TimeoutError) {
-			api.onRequestFail(RequestErrorCode.TIMEOUT_ERROR, "");
+			api.onRequestFail(RequestError.TIMEOUT_ERROR, "");
 		} else if (volleyError instanceof NoConnectionError) {
-			api.onRequestFail(RequestErrorCode.NETWORK_NOT_AVAILABLE, "");
+			api.onRequestFail(RequestError.NETWORK_NOT_AVAILABLE, "");
 		} else {
 			if (volleyError.networkResponse == null) {
-				api.onRequestFail(RequestErrorCode.SERVER_ERROR, "");
+				api.onRequestFail(RequestError.UNKNOWN_SERVER_ERROR, "");
 				return;
 			}
 			statusCode = volleyError.networkResponse.statusCode;
@@ -277,9 +277,9 @@ public class VolleyRequestExecutor implements RequestExecutor {
 				mLogger.e(Log.getStackTraceString(e));
 			} catch (ApiCipherException e) {
 				mLogger.e(Log.getStackTraceString(e));
-				api.onRequestFail(RequestErrorCode.DECODE_ERROR, "Decode response body error.");
+				api.onRequestFail(RequestError.DECODE_ERROR, "Decode response body error.");
 			}
-			api.onRequestFail(RequestErrorCode.SERVER_ERROR, responseBody);
+			api.onRequestFail(RequestError.UNKNOWN_SERVER_ERROR, responseBody);
 		}
 		mLogger.e(api.getClass().getSimpleName() + String.format(DEBUG_ERROR_BODY_MESSAGE, statusCode) + responseBody);
 	}

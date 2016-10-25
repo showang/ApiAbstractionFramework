@@ -9,16 +9,16 @@ import java.util.List;
 import java.util.Map;
 
 import tw.showang.apiabstractionframework.example.api.GetCommentsApi.GetCommentsResult;
-import tw.showang.apiabstrationframework.error.ApiException;
 
 public class GetCommentsApi extends ExampleApiBase<GetCommentsApi, List<GetCommentsResult>> {
 
 	@Override
 	protected List<GetCommentsResult> parseResult(Gson gson, String result) throws ApiException {
-		Type type = new TypeToken<List<GetCommentsResult>>() {}.getType();
+		Type type = new TypeToken<List<GetCommentsResult>>() {
+		}.getType();
 		List<GetCommentsResult> apiResult = gson.fromJson(result, type);
 		if (apiResult.size() == 0) {
-			throw new ApiException(0, "Server error.");
+			throw new ApiException(ExampleApiError.RESULT_EMPTY, "Empty Result");
 		}
 		return apiResult;
 	}

@@ -34,7 +34,7 @@ public class ApiTestBase {
 			case ExampleApiError.PARSE_DATA_ERROR:
 				errorType = "PARSE_API_FAIL";
 				break;
-			case ExampleApiError.SERVER_ERROR:
+			case ExampleApiError.UNKNOWN_SERVER_ERROR:
 				errorType = "UNKNOWN_SERVER_ERROR";
 				break;
 			case ExampleApiError.REQUEST_TIMEOUT:

@@ -24,8 +24,8 @@ import tw.showang.apiabstrationframework.Api.HttpMethod;
 import tw.showang.apiabstrationframework.ApiCipher;
 import tw.showang.apiabstrationframework.RequestExecutor;
 import tw.showang.apiabstrationframework.error.ApiCipherException;
-import tw.showang.apiabstrationframework.error.ApiException;
-import tw.showang.apiabstrationframework.error.RequestErrorCode;
+import tw.showang.apiabstrationframework.error.RequestError;
+import tw.showang.apiabstrationframework.error.RequestException;
 import tw.showang.apiabstrationframework.logger.Logger;
 import tw.showang.apiabstrationframework.util.AsyncManager;
 import tw.showang.apiabstrationframework.util.AsyncManager.AsyncWork;
@@ -71,14 +71,14 @@ public class OkHttp3RequestExecutor implements RequestExecutor {
 							result.response = doRequest(request, api);
 						} catch (IOException e) {
 							e.printStackTrace();
-							result.exception = new ApiException(RequestErrorCode.IO_ERROR, e);
+							result.exception = new RequestException(RequestError.NETWORK_NOT_AVAILABLE, e);
 						}
 						if (result.response != null) {
 							try {
 								result.decodedBody = decodeBody(api, result);
 							} catch (Exception e) {
 								e.printStackTrace();
-								result.exception = new ApiException(RequestErrorCode.DECODE_ERROR, e);
+								result.exception = new RequestException(RequestError.DECODE_ERROR, e);
 							}
 						}
 						return result;
@@ -98,7 +98,7 @@ public class OkHttp3RequestExecutor implements RequestExecutor {
 		ApiCipher cipher = api.getApiCipher();
 		ResponseBody responseBody = response.body();
 		if (responseBody.contentLength() == 0) {
-			return "";
+			return null;
 		}
 		return api.isResponseBodyDecrypt() && cipher != null ?
 				new String(cipher.decode(responseBody.bytes()), URL_CHAR_ENCODE) : responseBody.string();
@@ -108,17 +108,17 @@ public class OkHttp3RequestExecutor implements RequestExecutor {
 		if (result.exception == null) {
 			Response response = result.response;
 			int responseCode = response.code();
-			if (responseCode <= 200) {
+			if (responseCode >= 200 && responseCode < 300) {
 				api.onRequestSuccess(result.decodedBody);
 			} else if (responseCode == 408) {
-				api.onRequestFail(RequestErrorCode.TIMEOUT_ERROR, "408 timeout.");
+				api.onRequestFail(RequestError.TIMEOUT_ERROR, "408 timeout.");
 			} else {
 				System.out.println("responseCode: " + responseCode + " - " + result.decodedBody);
-				api.onRequestFail(RequestErrorCode.SERVER_ERROR, "");
+				api.onRequestFail(RequestError.UNKNOWN_SERVER_ERROR, "");
 			}
 		} else {
 			mLogger.e(Log.getStackTraceString(result.exception));
-			api.onRequestFail(RequestErrorCode.DECODE_ERROR, "Exception.");
+			api.onRequestFail(result.exception.errorCode, "Exception.");
 		}
 	}
 
@@ -233,7 +233,7 @@ public class OkHttp3RequestExecutor implements RequestExecutor {
 
 	private class RequestResult {
 		Response response;
-		Exception exception;
+		RequestException exception;
 		String decodedBody;
 	}
 

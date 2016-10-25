@@ -1,5 +1,8 @@
 package tw.showang.apiabstractionframework.example.api;
 
+import android.support.annotation.Nullable;
+import android.util.Log;
+
 import com.google.gson.Gson;
 
 import java.util.Map;
@@ -7,7 +10,7 @@ import java.util.Map;
 import tw.showang.apiabstrationframework.Api;
 import tw.showang.apiabstrationframework.ApiCipher;
 import tw.showang.apiabstrationframework.RequestExecutor;
-import tw.showang.apiabstrationframework.error.ApiException;
+import tw.showang.apiabstrationframework.error.RequestError;
 import tw.showang.apiabstrationframework.logger.Logger;
 import tw.showang.apiabstrationframework.util.AsyncManager;
 import tw.showang.apiabstrationframework.util.AsyncManager.AsyncWork;
@@ -49,26 +52,32 @@ public abstract class ExampleApiBase<SubClass extends ExampleApiBase<SubClass, R
 
 	@Override
 	public void onRequestSuccess(final String result) {
-		new AsyncManager<Result>()
-				.background(new AsyncWork<Result>() {
+		new AsyncManager<MiddleResult<Result>>()
+				.background(new AsyncWork<MiddleResult<Result>>() {
 					@Override
-					public Result doInBackground() {
-						Result parsedResult = null;
+					public MiddleResult<Result> doInBackground() {
+						MiddleResult<Result> middleResult = new MiddleResult<>();
 						try {
-							parsedResult = parseResult(sGson, result);
-						} catch (ApiException e) {
-							e.printStackTrace();
+							middleResult.result = parseResult(sGson, result);
+						} catch (Exception e) {
+							sLogger.e(Log.getStackTraceString(e));
+							middleResult.exception = e;
 						}
-						return parsedResult;
+						return middleResult;
 					}
 				})
-				.post(new PostWork<Result>() {
+				.post(new PostWork<MiddleResult<Result>>() {
 					@Override
-					public void onPostExecute(Result result) {
-						if (result != null && mSuccessListener != null) {
-							mSuccessListener.onSuccess(result);
+					public void onPostExecute(MiddleResult<Result> middleResult) {
+						if (middleResult.exception == null && middleResult.result != null) {
+							if (mSuccessListener != null) {
+								mSuccessListener.onSuccess(middleResult.result);
+							}
 						} else {
-
+							if (mErrorListener == null) {
+								return;
+							}
+							mErrorListener.onFail(ExampleApiError.PARSE_DATA_ERROR, "");
 						}
 					}
 				})
@@ -77,10 +86,25 @@ public abstract class ExampleApiBase<SubClass extends ExampleApiBase<SubClass, R
 
 	protected abstract Result parseResult(Gson gson, String result) throws ApiException;
 
-
 	@Override
 	public void onRequestFail(int cause, String errorMessage) {
-
+		if (mErrorListener == null) {
+			return;
+		}
+		int errorCode;
+		switch (cause) {
+			case RequestError.NETWORK_NOT_AVAILABLE:
+				errorCode = ExampleApiError.NETWORK_NOT_AVAILABLE;
+				break;
+			case RequestError.TIMEOUT_ERROR:
+				errorCode = ExampleApiError.REQUEST_TIMEOUT;
+				break;
+			case RequestError.DECODE_ERROR:
+			case RequestError.UNKNOWN_SERVER_ERROR:
+			default:
+				errorCode = ExampleApiError.UNKNOWN_SERVER_ERROR;
+		}
+		mErrorListener.onFail(errorCode, errorMessage);
 	}
 
 	@Override
@@ -110,6 +134,7 @@ public abstract class ExampleApiBase<SubClass extends ExampleApiBase<SubClass, R
 	}
 
 	@Override
+	@Nullable
 	public ApiCipher getApiCipher() {
 		return null;
 	}
@@ -164,5 +189,10 @@ public abstract class ExampleApiBase<SubClass extends ExampleApiBase<SubClass, R
 
 	interface ApiErrorListener {
 		void onFail(int errorType, String message);
+	}
+
+	private class MiddleResult<T> {
+		T result;
+		Exception exception;
 	}
 }
