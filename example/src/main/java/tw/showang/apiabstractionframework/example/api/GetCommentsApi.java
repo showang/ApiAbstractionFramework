@@ -38,7 +38,6 @@ public class GetCommentsApi extends ExampleApiBase<GetCommentsApi, List<GetComme
 		parameterMap.put("postId", "1");
 	}
 
-
 	public class GetCommentsResult {
 		@SerializedName("postId")
 		public int postId;

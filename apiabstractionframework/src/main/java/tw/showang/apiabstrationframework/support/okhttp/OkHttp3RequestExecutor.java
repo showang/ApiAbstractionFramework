@@ -93,7 +93,7 @@ public class OkHttp3RequestExecutor implements RequestExecutor {
 				.start();
 	}
 
-	private String decodeBody(Api api, RequestResult result) throws Exception {
+	private byte[] decodeBody(Api api, RequestResult result) throws Exception {
 		Response response = result.response;
 		ApiCipher cipher = api.getApiCipher();
 		ResponseBody responseBody = response.body();
@@ -101,7 +101,7 @@ public class OkHttp3RequestExecutor implements RequestExecutor {
 			return null;
 		}
 		return api.isResponseBodyDecrypt() && cipher != null ?
-				new String(cipher.decode(responseBody.bytes()), URL_CHAR_ENCODE) : responseBody.string();
+				cipher.decode(responseBody.bytes()) : responseBody.bytes();
 	}
 
 	private void processResult(Api api, RequestResult result) {
@@ -113,7 +113,6 @@ public class OkHttp3RequestExecutor implements RequestExecutor {
 			} else if (responseCode == 408) {
 				api.onRequestFail(RequestError.TIMEOUT_ERROR, "408 timeout.");
 			} else {
-				System.out.println("responseCode: " + responseCode + " - " + result.decodedBody);
 				api.onRequestFail(RequestError.UNKNOWN_SERVER_ERROR, "");
 			}
 		} else {
@@ -162,7 +161,7 @@ public class OkHttp3RequestExecutor implements RequestExecutor {
 	private RequestBody createRequestBody(Api api) {
 		if (api.getContentType().toLowerCase().contains(CONTENT_TYPE_JSON)) {
 			ApiCipher cipher = api.getApiCipher();
-			byte[] bodyBytes = api.getRequestBody().getBytes();
+			byte[] bodyBytes = api.getRequestBody();
 			try {
 				bodyBytes = cipher != null ? cipher.encode(bodyBytes) : bodyBytes;
 			} catch (ApiCipherException e) {
@@ -234,7 +233,7 @@ public class OkHttp3RequestExecutor implements RequestExecutor {
 	private class RequestResult {
 		Response response;
 		RequestException exception;
-		String decodedBody;
+		byte[] decodedBody;
 	}
 
 }

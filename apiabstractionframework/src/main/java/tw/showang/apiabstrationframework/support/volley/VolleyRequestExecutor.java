@@ -18,11 +18,8 @@ import com.android.volley.TimeoutError;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.HttpHeaderParser;
 import com.android.volley.toolbox.HttpStack;
-import com.android.volley.toolbox.JsonRequest;
-import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Map;
@@ -75,23 +72,17 @@ public class VolleyRequestExecutor implements RequestExecutor {
 
 	@Override
 	public void request(Api api, Object tag) {
-		Request<String> request =
-				isRequestByJson(api) ?
-						createJsonStringRequest(api) :
-						createStringRequest(api);
-		request.setRetryPolicy(new DefaultRetryPolicy(api.getTimeout(), api.getRetryCount(), DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
-		request.setTag(tag);
+		Request request = createVolleyRequest(api)
+				.setRetryPolicy(new DefaultRetryPolicy(api.getTimeout(), api.getRetryCount(), DefaultRetryPolicy.DEFAULT_BACKOFF_MULT))
+				.setTag(tag);
 		mRequestQueue.add(request);
 	}
 
-	private Request<String> createJsonStringRequest(final Api api) {
-		return new JsonRequest<String>(getVolleyMethodType(api.getHttpMethod()), api.getUrl(), api.getRequestBody(), new Response.Listener<String>() {
-
-			@Override
-			public void onResponse(String response) {
-				api.onRequestSuccess(response);
-			}
-		}, new Response.ErrorListener() {
+	private Request<byte[]> createVolleyRequest(final Api api) {
+		int method = getVolleyMethodType(api.getHttpMethod());
+		String url = method == Request.Method.GET ? getGetUrlString(api) : api.getUrl();
+		mLogger.i(DEBUG_CONNECT_MESSAGE + url);
+		return new Request<byte[]>(method, url, new Response.ErrorListener() {
 			@Override
 			public void onErrorResponse(VolleyError error) {
 				onResponseError(api, error);
@@ -105,8 +96,7 @@ public class VolleyRequestExecutor implements RequestExecutor {
 			@Override
 			public byte[] getBody() {
 				ApiCipher cipher = api.getApiCipher();
-				String requestBody = api.getRequestBody();
-				byte[] bodyBytes = requestBody.getBytes();
+				byte[] bodyBytes = api.getRequestBody();
 				try {
 					return cipher != null && api.isRequestBodyEncrypt() ? cipher.encode(bodyBytes) : bodyBytes;
 				} catch (ApiCipherException e) {
@@ -123,70 +113,19 @@ public class VolleyRequestExecutor implements RequestExecutor {
 			}
 
 			@Override
-			protected Response<String> parseNetworkResponse(NetworkResponse response) {
+			protected Response<byte[]> parseNetworkResponse(NetworkResponse response) {
 				try {
-					String jsonString = new String(response.data,
-							HttpHeaderParser.parseCharset(response.headers, PROTOCOL_CHARSET));
-					return Response.success(jsonString,
-							HttpHeaderParser.parseCacheHeaders(response));
-				} catch (UnsupportedEncodingException e) {
+					return Response.success(decodeResponseBody(api, response.data), HttpHeaderParser.parseCacheHeaders(response));
+				} catch (ApiCipherException e) {
 					return Response.error(new ParseError(e));
 				}
 			}
-		};
-	}
 
-	private boolean isRequestByJson(Api api) {
-		String requestBody = api.getRequestBody();
-		return api.getContentType().contains(CONTENT_TYPE_JSON) && requestBody != null && !requestBody.isEmpty();
-	}
-
-	private Request<String> createStringRequest(final Api api) {
-		int method = getVolleyMethodType(api.getHttpMethod());
-		String url = method == Request.Method.GET ? getGetUrlString(api) : api.getUrl();
-		mLogger.i(DEBUG_CONNECT_MESSAGE + url);
-		return new StringRequest(method, url, new Response.Listener<String>() {
 			@Override
-			public void onResponse(String response) {
+			protected void deliverResponse(byte[] response) {
 				mLogger.i(api.getClass().getCanonicalName() + DEBUG_SUCCESS_MESSAGE);
 				api.onRequestSuccess(response);
 			}
-		}, new Response.ErrorListener() {
-			@Override
-			public void onErrorResponse(VolleyError error) {
-				onResponseError(api, error);
-			}
-		}) {
-			@Override
-			public Priority getPriority() {
-				return getVolleyPriority(api.getPriority());
-			}
-
-			@Override
-			protected Response<String> parseNetworkResponse(NetworkResponse response) {
-				try {
-					String result = parseResponseBody(api, response.data);
-					return Response.success(result, HttpHeaderParser.parseCacheHeaders(response));
-				} catch (IOException | ApiCipherException e) {
-					mLogger.e(Log.getStackTraceString(e));
-				}
-				return super.parseNetworkResponse(response);
-			}
-
-			@Override
-			public Map<String, String> getHeaders() throws AuthFailureError {
-				Map<String, String> headerMap = new ArrayMap<>();
-				api.getHeaders(headerMap);
-				return headerMap;
-			}
-
-			@Override
-			protected Map<String, String> getParams() throws AuthFailureError {
-				Map<String, String> paramMap = new ArrayMap<>();
-				api.getParameter(paramMap);
-				return paramMap;
-			}
-
 		};
 	}
 
@@ -272,7 +211,7 @@ public class VolleyRequestExecutor implements RequestExecutor {
 			}
 			statusCode = volleyError.networkResponse.statusCode;
 			try {
-				responseBody = parseResponseBody(api, volleyError.networkResponse.data);
+				responseBody = new String(decodeResponseBody(api, volleyError.networkResponse.data), "utf-8");
 			} catch (UnsupportedEncodingException e) {
 				mLogger.e(Log.getStackTraceString(e));
 			} catch (ApiCipherException e) {
@@ -284,9 +223,9 @@ public class VolleyRequestExecutor implements RequestExecutor {
 		mLogger.e(api.getClass().getSimpleName() + String.format(DEBUG_ERROR_BODY_MESSAGE, statusCode) + responseBody);
 	}
 
-	private String parseResponseBody(Api api, byte[] body) throws UnsupportedEncodingException, ApiCipherException {
+	private byte[] decodeResponseBody(Api api, byte[] responseBody) throws ApiCipherException {
 		ApiCipher cipher = api.getApiCipher();
-		return new String(cipher != null && api.isResponseBodyDecrypt() ? cipher.decode(body) : body, URL_CHAR_ENCODE);
+		return api.isResponseBodyDecrypt() ? cipher.decode(responseBody) : responseBody;
 	}
 
 	@Override

@@ -5,6 +5,7 @@ import android.util.Log;
 
 import com.google.gson.Gson;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Map;
 
 import tw.showang.apiabstrationframework.Api;
@@ -51,14 +52,23 @@ public abstract class ExampleApiBase<SubClass extends ExampleApiBase<SubClass, R
 	}
 
 	@Override
-	public void onRequestSuccess(final String result) {
+	public void onRequestSuccess(final byte[] byteArrayResult) {
+		String result;
+		try {
+			result = new String(byteArrayResult, "utf-8");
+		} catch (UnsupportedEncodingException e) {
+			result = "";
+			sLogger.e(Log.getStackTraceString(e));
+		}
+		sLogger.i("result: " + result);
+		final String finalResult = result;
 		new AsyncManager<MiddleResult<Result>>()
 				.background(new AsyncWork<MiddleResult<Result>>() {
 					@Override
 					public MiddleResult<Result> doInBackground() {
 						MiddleResult<Result> middleResult = new MiddleResult<>();
 						try {
-							middleResult.result = parseResult(sGson, result);
+							middleResult.result = parseResult(sGson, finalResult);
 						} catch (Exception e) {
 							sLogger.e(Log.getStackTraceString(e));
 							middleResult.exception = e;
@@ -108,7 +118,12 @@ public abstract class ExampleApiBase<SubClass extends ExampleApiBase<SubClass, R
 	}
 
 	@Override
-	public String getRequestBody() {
+	final public byte[] getRequestBody() {
+		String body = getBody();
+		return body == null ? new byte[0] : body.getBytes();
+	}
+
+	protected String getBody() {
 		return null;
 	}
 
@@ -171,23 +186,19 @@ public abstract class ExampleApiBase<SubClass extends ExampleApiBase<SubClass, R
 		return (SubClass) this;
 	}
 
-	@SuppressWarnings("unchecked")
-	public SubClass cancel() {
+	public void cancel() {
 		sExecutor.cancel(this);
-		return (SubClass) this;
 	}
 
-	@SuppressWarnings("unchecked")
-	public SubClass cancel(Object tag) {
+	public void cancel(Object tag) {
 		sExecutor.cancel(tag);
-		return (SubClass) this;
 	}
 
-	interface ApiSuccessListener<T> {
+	public interface ApiSuccessListener<T> {
 		void onSuccess(T response);
 	}
 
-	interface ApiErrorListener {
+	public interface ApiErrorListener {
 		void onFail(int errorType, String message);
 	}
 

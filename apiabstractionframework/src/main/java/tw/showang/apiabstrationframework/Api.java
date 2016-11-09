@@ -14,7 +14,7 @@ public interface Api {
 
 	String getUrl();
 
-	String getRequestBody();
+	byte[] getRequestBody();
 
 	String getContentType();
 
@@ -22,7 +22,7 @@ public interface Api {
 
 	void getParameter(Map<String, String> parameterMap);
 
-	void onRequestSuccess(String result);
+	void onRequestSuccess(byte[] result);
 
 	void onRequestFail(int cause, String errorMessage);
 
