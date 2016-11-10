@@ -1,4 +1,4 @@
-package tw.showang.apiabstractionframework.example.api;
+package tw.showang.apiabstractionframework.example.api.base;
 
 public class ExampleApiError {
 

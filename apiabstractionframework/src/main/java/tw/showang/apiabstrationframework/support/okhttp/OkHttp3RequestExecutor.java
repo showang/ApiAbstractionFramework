@@ -77,8 +77,14 @@ public class OkHttp3RequestExecutor implements RequestExecutor {
 							try {
 								result.decodedBody = decodeBody(api, result);
 							} catch (Exception e) {
-								e.printStackTrace();
-								result.exception = new RequestException(RequestError.DECODE_ERROR, e);
+								String resultString;
+								try {
+									resultString = new String(result.response.body().bytes(), "utf-8");
+								} catch (IOException e1) {
+									resultString = null;
+								}
+								mLogger.e(Log.getStackTraceString(e));
+								result.exception = new RequestException(RequestError.DECODE_ERROR, resultString);
 							}
 						}
 						return result;
@@ -105,19 +111,23 @@ public class OkHttp3RequestExecutor implements RequestExecutor {
 	}
 
 	private void processResult(Api api, RequestResult result) {
+		mLogger.i("processResult");
 		if (result.exception == null) {
 			Response response = result.response;
 			int responseCode = response.code();
 			if (responseCode >= 200 && responseCode < 300) {
 				api.onRequestSuccess(result.decodedBody);
-			} else if (responseCode == 408) {
-				api.onRequestFail(RequestError.TIMEOUT_ERROR, "408 timeout.");
 			} else {
-				api.onRequestFail(RequestError.UNKNOWN_SERVER_ERROR, "");
+				String message = response.message();
+				if (responseCode == 408) {
+					api.onRequestFail(RequestError.TIMEOUT_ERROR, "408 timeout.");
+				} else {
+					api.onRequestFail(RequestError.UNKNOWN_SERVER_ERROR, message);
+				}
 			}
 		} else {
 			mLogger.e(Log.getStackTraceString(result.exception));
-			api.onRequestFail(result.exception.errorCode, "Exception.");
+			api.onRequestFail(result.exception.errorCode, result.exception.getMessage());
 		}
 	}
 

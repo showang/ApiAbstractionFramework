@@ -1,4 +1,4 @@
-package tw.showang.apiabstractionframework.example.api;
+package tw.showang.apiabstractionframework.example.api.base;
 
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -22,11 +22,17 @@ public abstract class ExampleApiBase<SubClass extends ExampleApiBase<SubClass, R
 	private static Gson sGson;
 	private static Logger sLogger;
 	private static RequestExecutor sExecutor;
+	private static String sAccessToken;
 
-	public static void init(RequestExecutor executor, Logger logger) {
+	public static void init(String token, RequestExecutor executor, Logger logger) {
 		sExecutor = executor;
 		sLogger = logger;
 		sGson = new Gson();
+		sAccessToken = token;
+	}
+
+	protected Gson getGson() {
+		return sGson;
 	}
 
 	private ApiSuccessListener<Result> mSuccessListener;
@@ -44,7 +50,7 @@ public abstract class ExampleApiBase<SubClass extends ExampleApiBase<SubClass, R
 
 	@Override
 	public String getDomainName() {
-		return "jsonplaceholder.typicode.com";
+		return "api.github.com";
 	}
 
 	protected String getBaseUri() {
@@ -133,7 +139,9 @@ public abstract class ExampleApiBase<SubClass extends ExampleApiBase<SubClass, R
 	}
 
 	@Override
-	public void getHeaders(Map<String, String> headerMap) {}
+	public void getHeaders(Map<String, String> headerMap) {
+		headerMap.put("Authorization", "token " + sAccessToken);
+	}
 
 	@Override
 	public void getParameter(Map<String, String> parameterMap) {}
