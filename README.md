@@ -1,2 +1,2 @@
 # ApiAbstractionFramework
-Abstract your RESTful api framework for isolated clean api code. 
+Abstract your 3rd party RESTful api library for isolated clean api code. 
