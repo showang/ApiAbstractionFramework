@@ -1,21 +1,18 @@
 apply plugin: 'com.github.dcendents.android-maven'
 apply plugin: 'com.jfrog.bintray'
-// This is the library version used when deploying the artifact
-version = "1.0.0"
 
-def siteUrl = 'https://github.com/showang/ApiAbstractionFramework'      // 项目的主页
-def gitUrl = 'https://github.com/showang/ApiAbstractionFramework.git'   // Git仓库的url
-group = "tw.showang.android"                                        // Maven Group ID for the artifact，一般填你唯一的包名
+version = libVersion
+
+def siteUrl = 'https://github.com/showang/ApiAbstractionFramework'
+def gitUrl = 'https://github.com/showang/ApiAbstractionFramework.git'
+group = "tw.showang.android"
 install {
     repositories.mavenInstaller {
-        // This generates POM.xml with proper parameters
         pom {
             project {
                 packaging 'aar'
-                // Add your description here
                 name 'Abstract your 3rd party RESTful api library for isolated clean api code. '
                 url siteUrl
-                // Set your license
                 licenses {
                     license {
                         name 'The Apache Software License, Version 2.0'
@@ -24,7 +21,7 @@ install {
                 }
                 developers {
                     developer {
-                        id 'showang'        //填写的一些基本信息
+                        id 'showang'
                         name 'William Wang'
                         email 'showang730@gmail.com'
                     }
@@ -62,7 +59,7 @@ bintray {
     configurations = ['archives']
     pkg {
         repo = "AndroidToolkits"
-        name = "ApiAbstractionFramework"    //发布到JCenter上的项目名字
+        name = "ApiAbstractionFramework"
         websiteUrl = siteUrl
         vcsUrl = gitUrl
         licenses = ["Apache-2.0"]
@@ -70,7 +67,7 @@ bintray {
     }
 }
 javadoc {
-    options{
+    options {
         encoding "UTF-8"
         charSet 'UTF-8'
     }

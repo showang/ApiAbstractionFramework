@@ -1,4 +1,3 @@
 <resources>
 	<string name="app_name">Example</string>
-	<string name="github_access_token">YOUR_GITHUB_ACCESS_TOKEN</string>
 </resources>

@@ -18,11 +18,13 @@ allprojects {
             name 'glide-snapshot'
             url 'http://oss.sonatype.org/content/repositories/snapshots'
         }
-        maven {
-            url 'https://dl.bintray.com/showang/AndroidToolkits'
-        }
     }
     tasks.withType(Javadoc) { failOnError false }
+
+    ext {
+        libVersion = '1.0.1'
+
+    }
 }
 
 task clean(type: Delete) {
