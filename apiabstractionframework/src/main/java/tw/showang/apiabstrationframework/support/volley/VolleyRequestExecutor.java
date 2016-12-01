@@ -28,7 +28,6 @@ import okhttp3.OkHttpClient;
 import tw.showang.apiabstrationframework.Api;
 import tw.showang.apiabstrationframework.Api.HttpMethod;
 import tw.showang.apiabstrationframework.ApiCipher;
-import tw.showang.apiabstrationframework.BuildConfig;
 import tw.showang.apiabstrationframework.RequestExecutor;
 import tw.showang.apiabstrationframework.error.ApiCipherException;
 import tw.showang.apiabstrationframework.error.RequestError;
@@ -49,10 +48,10 @@ public class VolleyRequestExecutor implements RequestExecutor {
 		static final String QUESTION = "?";
 	}
 
-	private static final String DEBUG_SUCCESS_MESSAGE = BuildConfig.DEBUG ? " request success." : null;
-	private static final String DEBUG_CONNECT_MESSAGE = BuildConfig.DEBUG ? "Connect API url " : null;
-	private static final String DEBUG_REQUEST_ERROR_MESSAGE = BuildConfig.DEBUG ? "Request error " : null;
-	private static final String DEBUG_ERROR_BODY_MESSAGE = BuildConfig.DEBUG ? " error with statusCode[%s]: " : null;
+	private static final String DEBUG_SUCCESS_MESSAGE = " request success.";
+	private static final String DEBUG_CONNECT_MESSAGE = "Connect API url ";
+	private static final String DEBUG_REQUEST_ERROR_MESSAGE = "Request error ";
+	private static final String DEBUG_ERROR_BODY_MESSAGE = " error with statusCode[%s]: ";
 
 	private RequestQueue mRequestQueue;
 	private Logger mLogger;
